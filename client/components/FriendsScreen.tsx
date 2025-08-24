@@ -5,7 +5,9 @@ import {
     Pressable,
     StyleSheet,
     View,
+    TouchableOpacity,
 } from 'react-native';
+
 import Button from '@/components/common/Button';
 import { Text } from '@/components/common/Text';
 import { theme } from '@/theme/theme';
@@ -14,8 +16,10 @@ import { useMutation } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useGetOthers } from '@/services/others';
 import AddFriend from './forms/AddFriend';
+import DeleteFriend from './DeleteFriend';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
-type Friend = {
+export type Friend = {
     id: string;
     name: string;
 };
@@ -23,6 +27,7 @@ type Friend = {
 export default function FriendsScreen() {
     const [hovered, setHovered] = useState<string | null>(null);
     const [pressed, setPressed] = useState<string | null>(null);
+    const [removeId, setRemoveId] = useState<string | null>(null);
 
     const { mutate: logout } = useMutation({
         mutationFn: logoutUser,
@@ -39,28 +44,51 @@ export default function FriendsScreen() {
     }));
 
     const renderFriend = ({ item }: { item: Friend }) => (
-        <Pressable
-            onPressIn={() => setPressed(item.id)}
-            onHoverIn={() => setHovered(item.id)}
-            onHoverOut={() => setHovered(null)}
-            style={[
-                styles.friendItem,
-                hovered === item.id && styles.friendItemHovered,
-                pressed === item.id && styles.friendItemPressed,
-            ]}
-        >
-            <View
-                style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    flex: 1,
+        <>
+            <Pressable
+                onPressIn={() => {
+                    setPressed(item.id);
+                    setRemoveId(null);
                 }}
+                onHoverIn={() => setHovered(item.id)}
+                onHoverOut={() => setHovered(null)}
+                style={[
+                    styles.friendItem,
+                    hovered === item.id && styles.friendItemHovered,
+                    pressed === item.id && styles.friendItemPressed,
+                ]}
             >
-                <Text style={{ textAlign: 'center', flex: 1 }}>
-                    {item.name}
-                </Text>
-            </View>
-        </Pressable>
+                <View
+                    style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        flex: 1,
+                        paddingHorizontal: theme.spacing.md,
+                    }}
+                >
+                    <Text
+                        style={{ flex: 1, paddingVertical: theme.spacing.xs }}
+                    >
+                        {item.name}
+                    </Text>
+                    {pressed === item.id && (
+                        <TouchableOpacity onPress={() => setRemoveId(item.id)}>
+                            <Ionicons
+                                name="person-remove"
+                                size={22}
+                                color="white"
+                            />
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </Pressable>
+            {removeId === item.id && (
+                <DeleteFriend
+                    friend={item.name}
+                    onClose={() => setRemoveId(null)}
+                />
+            )}
+        </>
     );
 
     return (
@@ -110,18 +138,12 @@ const styles = StyleSheet.create({
     friendItem: {
         alignItems: 'center',
         flexDirection: 'row',
-        margin: theme.spacing.xs,
+        margin: theme.spacing.sm,
         marginHorizontal: theme.spacing.sm,
         borderRadius: theme.spacing.sm,
         borderColor: theme.colors.surface,
         borderWidth: 1,
-        paddingVertical: theme.spacing.sm,
-    },
-    avatar: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        marginHorizontal: theme.spacing.md,
+        paddingVertical: theme.spacing.md,
     },
 
     friendItemHovered: {
